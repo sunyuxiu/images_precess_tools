@@ -1,2 +1,2 @@
 import os
-print('0910;)`
+print('0910')
