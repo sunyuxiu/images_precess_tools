@@ -63,8 +63,68 @@
 #         #     print(f"[警告] 找不到xml文件: {base_name}.xml")
 
 
-# v2.0 传入参数 python filter_json.py no /home/lorenzo/test_chunk/labeling/chunk_0003 /home/lorenzo/test_chunk/labeling/no_label
+# # v2.0,只针对某个label 传入参数 python filter_json.py no /home/lorenzo/test_chunk/labeling/chunk_0003 /home/lorenzo/test_chunk/labeling/no_label
 
+# import os
+# import shutil
+# import json
+# import sys
+
+# def main():
+#     if len(sys.argv) != 4:
+#         print("用法: python filter_json.py <label> <json_dir> <save_dir>")
+#         sys.exit(1)
+
+#     target_label = sys.argv[1]  # e.g., "no"
+#     json_dir = sys.argv[2]
+#     save_dir = sys.argv[3]
+
+#     # 检查路径是否存在
+#     if not os.path.isdir(json_dir):
+#         print(f"[错误] 输入目录不存在: {json_dir}")
+#         sys.exit(1)
+
+#     os.makedirs(save_dir, exist_ok=True)
+
+#     # 遍历所有json文件
+#     for filename in os.listdir(json_dir):
+#         if not filename.endswith(".json"):
+#             continue
+
+#         json_path = os.path.join(json_dir, filename)
+
+#         # 解析json
+#         try:
+#             with open(json_path, 'r', encoding='utf-8') as f:
+#                 data = json.load(f)
+#         except Exception as e:
+#             print(f"[错误] 解析 JSON 文件失败: {json_path}, 错误: {e}")
+#             continue
+
+#         # 检查是否有目标label
+#         labels = [shape.get("label", "") for shape in data.get("shapes", [])]
+#         if any(label == target_label for label in labels):
+#             # 移动json
+#             shutil.move(json_path, os.path.join(save_dir, filename))
+
+#             # 移动对应图片
+#             base_name = os.path.splitext(filename)[0]
+#             found_image = False
+#             for ext in [".jpg", ".jpeg", ".png", ".bmp", ".webp"]:
+#                 image_path = os.path.join(json_dir, base_name + ext)
+#                 if os.path.exists(image_path):
+#                     shutil.move(image_path, os.path.join(save_dir, base_name + ext))
+#                     found_image = True
+#                     break
+#             if not found_image:
+#                 print(f"[警告] 找不到图片文件: {base_name}")
+
+# if __name__ == "__main__":
+#     main()
+
+
+
+# v3.0,在2.0的基础上添加了移除没有json对应的jpg到save_dir，和2.0可以选着用
 import os
 import shutil
 import json
@@ -86,7 +146,10 @@ def main():
 
     os.makedirs(save_dir, exist_ok=True)
 
-    # 遍历所有json文件
+    # 记录已处理的图片名字（不含扩展名）
+    processed_images = set()
+
+    # -------- 先处理 JSON ----------
     for filename in os.listdir(json_dir):
         if not filename.endswith(".json"):
             continue
@@ -114,10 +177,20 @@ def main():
                 image_path = os.path.join(json_dir, base_name + ext)
                 if os.path.exists(image_path):
                     shutil.move(image_path, os.path.join(save_dir, base_name + ext))
+                    processed_images.add(base_name)  # 记录已经处理过的图片
                     found_image = True
                     break
             if not found_image:
                 print(f"[警告] 找不到图片文件: {base_name}")
+
+    # -------- 再处理没有 JSON 的图片 ----------
+    for filename in os.listdir(json_dir):
+        if filename.lower().endswith((".jpg", ".jpeg", ".png", ".bmp", ".webp")):
+            base_name = os.path.splitext(filename)[0]
+            if base_name not in processed_images:  # 确保没被处理过
+                image_path = os.path.join(json_dir, filename)
+                shutil.move(image_path, os.path.join(save_dir, filename))
+                print(f"[提示] 图片没有对应的 JSON,已移动: {filename}")
 
 if __name__ == "__main__":
     main()
