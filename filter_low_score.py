@@ -106,7 +106,7 @@ def move_files(source_dir, target_dir, score_threshold):
                 continue
 
             if not data.get("shapes"):
-                print(f"{filename} 是空白 JSON，跳过")
+                print(f"{filename} 是空白 JSON,跳过")
                 continue
             for shape in data.get("shapes", []):
                 try:
