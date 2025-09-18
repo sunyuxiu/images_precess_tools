@@ -137,7 +137,7 @@ def move_files(source_dir, target_dir, score_threshold):
 
 def main():
     if len(sys.argv) != 4:
-        print("用法: python move_highscore.py <source_dir> <target_dir> <score_threshold>")
+        print("用法: python move_highscore.py <source_dir> <target_dir> <score_threshold>,score_threshold是小数,比如0.7")
         sys.exit(1)
 
     source_dir = sys.argv[1]
